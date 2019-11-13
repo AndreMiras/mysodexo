@@ -1,6 +1,16 @@
 import os
+import sys
 
 from setuptools import setup
+
+REQUIRED_PYTHON = (3, 6)
+
+
+def assert_python_version(version_info):
+    current_python = version_info[:2]
+    error_message = "Python {}.{} is required, but you're running Python {}.{}"
+    error_message = error_message.format(*(REQUIRED_PYTHON + current_python))
+    assert current_python >= REQUIRED_PYTHON, error_message
 
 
 def read(fname):
@@ -25,6 +35,7 @@ setup_params = {
 
 
 def run_setup():
+    assert_python_version(sys.version_info)
     setup(**setup_params)
 
 
