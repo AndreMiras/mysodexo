@@ -84,6 +84,19 @@ def test_login():
     assert m_post.call_count == 1
 
 
+def test_login_from_session():
+    m_session = mock.Mock(spec=requests.sessions.Session)
+    m_response = mock.Mock()
+    m_session.post.return_value.json.return_value = {
+        "code": JSON_RESPONSE_OK_CODE,
+        "msg": JSON_RESPONSE_OK_MSG,
+        "response": m_response,
+    }
+    account_info = api.login_from_session(m_session)
+    assert account_info == m_response
+    assert m_session.post.call_count == 1
+
+
 def test_get_cards():
     dni = mock.ANY
     session = mock.Mock(spec=requests.sessions.Session)

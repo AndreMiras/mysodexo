@@ -16,5 +16,6 @@ DEFAULT_OS = 0
 APPLICATION_NAME = "mysodexo"
 SESSION_CACHE_FILENAME = "session.cache"
 LOGIN_ENDPOINT = "v3/connect/login"
+LOGIN_FROM_SESSION_ENDPOINT = "v3/connect/loginFromSession"
 GET_CARDS_ENDPOINT = "v3/card/getCards"
 GET_DETAIL_CARD = "v2/card/getDetailCard"

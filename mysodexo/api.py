@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 from pprint import pprint
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 import requests
 
@@ -15,6 +15,7 @@ from mysodexo.constants import (
     JSON_RESPONSE_OK_CODE,
     JSON_RESPONSE_OK_MSG,
     LOGIN_ENDPOINT,
+    LOGIN_FROM_SESSION_ENDPOINT,
     REQUESTS_CERT,
     REQUESTS_HEADERS,
 )
@@ -34,7 +35,7 @@ def handle_code_msg(json_response: dict):
 
 
 def session_post(
-    session: requests.sessions.Session, endpoint: str, data: dict
+    session: requests.sessions.Session, endpoint: str, data: Dict[str, Any]
 ) -> dict:
     """
     Posts JSON `data` to `endpoint` using the `session`.
@@ -62,6 +63,15 @@ def login(email: str, password: str) -> Tuple[requests.sessions.Session, dict]:
     json_response = session_post(session, endpoint, data)
     account_info = json_response["response"]
     return session, account_info
+
+
+def login_from_session(session: requests.sessions.Session) -> dict:
+    """Logins with session and returns account info."""
+    endpoint = LOGIN_FROM_SESSION_ENDPOINT
+    data: Dict[str, Any] = {}
+    json_response = session_post(session, endpoint, data)
+    account_info = json_response["response"]
+    return account_info
 
 
 def get_cards(session: requests.sessions.Session, dni: str) -> list:
