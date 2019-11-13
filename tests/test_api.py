@@ -85,3 +85,30 @@ def test_get_detail_card():
     }
     details = api.get_detail_card(session, card_number)
     assert details == s_details
+
+
+def test_main():
+    email = "foo@bar.com"
+    password = "password"
+    credentials = {
+        "EMAIL": email,
+        "PASSWORD": password,
+    }
+    m_session = mock.Mock()
+    m_dni = mock.Mock()
+    card_number = mock.Mock()
+    cards = [{"cardNumber": card_number}]
+    account_info = {"dni": m_dni}
+    with mock.patch.dict("os.environ", credentials), mock.patch(
+        "mysodexo.api.login", return_value=(m_session, account_info)
+    ) as m_login, mock.patch(
+        "mysodexo.api.get_cards", return_value=cards
+    ) as m_get_cards, mock.patch(
+        "mysodexo.api.get_detail_card"
+    ) as m_get_detail_card:
+        api.main()
+    assert m_login.call_args_list == [mock.call(email, password)]
+    assert m_get_cards.call_args_list == [mock.call(m_session, m_dni)]
+    assert m_get_detail_card.call_args_list == [
+        mock.call(m_session, card_number)
+    ]
