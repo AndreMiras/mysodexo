@@ -33,9 +33,25 @@ def handle_code_msg(json_response: dict):
     assert msg == JSON_RESPONSE_OK_MSG, (code, msg)
 
 
+def session_post(
+    session: requests.sessions.Session, endpoint: str, data: dict
+) -> dict:
+    """
+    Posts JSON `data` to `endpoint` using the `session`.
+    Handles errors and returns a json response dict.
+    """
+    endpoint = get_full_endpoint_url(endpoint)
+    response = session.post(
+        endpoint, json=data, cert=REQUESTS_CERT, headers=REQUESTS_HEADERS
+    )
+    json_response = response.json()
+    handle_code_msg(json_response)
+    return json_response
+
+
 def login(email: str, password: str) -> Tuple[requests.sessions.Session, dict]:
     """Logins with credentials and returns session and account info."""
-    endpoint = get_full_endpoint_url(LOGIN_ENDPOINT)
+    endpoint = LOGIN_ENDPOINT
     session = requests.session()
     data = {
         "username": email,
@@ -43,26 +59,18 @@ def login(email: str, password: str) -> Tuple[requests.sessions.Session, dict]:
         "deviceUid": DEFAULT_DEVICE_UID,
         "os": DEFAULT_OS,
     }
-    response = session.post(
-        endpoint, json=data, cert=REQUESTS_CERT, headers=REQUESTS_HEADERS
-    )
-    json_response = response.json()
-    handle_code_msg(json_response)
+    json_response = session_post(session, endpoint, data)
     account_info = json_response["response"]
     return session, account_info
 
 
 def get_cards(session: requests.sessions.Session, dni: str) -> list:
     """Returns cards list and details using the session provided."""
-    endpoint = get_full_endpoint_url(GET_CARDS_ENDPOINT)
+    endpoint = GET_CARDS_ENDPOINT
     data = {
         "dni": dni,
     }
-    response = session.post(
-        endpoint, json=data, cert=REQUESTS_CERT, headers=REQUESTS_HEADERS
-    )
-    json_response = response.json()
-    handle_code_msg(json_response)
+    json_response = session_post(session, endpoint, data)
     card_list = json_response["response"]["listCard"]
     return card_list
 
@@ -71,15 +79,11 @@ def get_detail_card(
     session: requests.sessions.Session, card_number: str
 ) -> dict:
     """Returns card details."""
-    endpoint = get_full_endpoint_url(GET_DETAIL_CARD)
+    endpoint = GET_DETAIL_CARD
     data = {
         "cardNumber": card_number,
     }
-    response = session.post(
-        endpoint, json=data, cert=REQUESTS_CERT, headers=REQUESTS_HEADERS
-    )
-    json_response = response.json()
-    handle_code_msg(json_response)
+    json_response = session_post(session, endpoint, data)
     details = json_response["response"]["cardDetail"]
     return details
 

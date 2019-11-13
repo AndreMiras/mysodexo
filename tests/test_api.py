@@ -7,6 +7,10 @@ from mysodexo import api
 from mysodexo.constants import JSON_RESPONSE_OK_CODE, JSON_RESPONSE_OK_MSG
 
 
+def patch_session_post():
+    return mock.patch("requests.sessions.Session.post", autospec=True)
+
+
 def test_get_full_endpoint_url():
     assert (
         api.get_full_endpoint_url(endpoint="endpoint1")
@@ -45,11 +49,30 @@ def test_handle_code_msg_error(code, msg):
     assert ex_info.value.args == ((code, msg),)
 
 
+def test_session_post():
+    session = requests.session()
+    endpoint = "endpoint"
+    expected_endpoint = f"https://sodexows.mo2o.com/en/{endpoint}"
+    data = mock.Mock()
+    cert = mock.ANY
+    headers = {"Accept": "application/json"}
+    with patch_session_post() as m_post, mock.patch(
+        "mysodexo.api.handle_code_msg"
+    ) as m_handle_code_msg:
+        api.session_post(session, endpoint, data)
+    assert m_post.call_args_list == [
+        mock.call(
+            session, expected_endpoint, cert=cert, headers=headers, json=data
+        )
+    ]
+    m_handle_code_msg.call_args_list
+
+
 def test_login():
     email = "foo@bar.com"
     password = "password"
     response = mock.sentinel
-    with mock.patch("requests.sessions.Session.post", autospec=True) as m_post:
+    with patch_session_post() as m_post:
         m_post.return_value.json.return_value = {
             "code": JSON_RESPONSE_OK_CODE,
             "msg": JSON_RESPONSE_OK_MSG,
