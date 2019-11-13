@@ -123,6 +123,19 @@ def test_get_detail_card():
     assert details == s_details
 
 
+def test_get_clear_pin():
+    m_card_number = mock.Mock()
+    session = mock.Mock(spec=requests.sessions.Session)
+    m_pin = mock.Mock()
+    session.post.return_value.json.return_value = {
+        "code": JSON_RESPONSE_OK_CODE,
+        "msg": JSON_RESPONSE_OK_MSG,
+        "response": {"clearPin": {"pin": m_pin}},
+    }
+    pin = api.get_clear_pin(session, m_card_number)
+    assert pin == m_pin
+
+
 def test_main():
     email = "foo@bar.com"
     password = "password"

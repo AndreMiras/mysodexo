@@ -11,7 +11,8 @@ from mysodexo.constants import (
     DEFAULT_LANG,
     DEFAULT_OS,
     GET_CARDS_ENDPOINT,
-    GET_DETAIL_CARD,
+    GET_CLEAR_PIN_ENDPOINT,
+    GET_DETAIL_CARD_ENDPOINT,
     JSON_RESPONSE_OK_CODE,
     JSON_RESPONSE_OK_MSG,
     LOGIN_ENDPOINT,
@@ -89,13 +90,24 @@ def get_detail_card(
     session: requests.sessions.Session, card_number: str
 ) -> dict:
     """Returns card details."""
-    endpoint = GET_DETAIL_CARD
+    endpoint = GET_DETAIL_CARD_ENDPOINT
     data = {
         "cardNumber": card_number,
     }
     json_response = session_post(session, endpoint, data)
     details = json_response["response"]["cardDetail"]
     return details
+
+
+def get_clear_pin(session: requests.sessions.Session, card_number: str) -> str:
+    """Returns card pin."""
+    endpoint = GET_CLEAR_PIN_ENDPOINT
+    data = {
+        "cardNumber": card_number,
+    }
+    json_response = session_post(session, endpoint, data)
+    pin = json_response["response"]["clearPin"]["pin"]
+    return pin
 
 
 def main():
