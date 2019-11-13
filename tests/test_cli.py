@@ -1,3 +1,4 @@
+import contextlib
 import pickle
 import tempfile
 from io import StringIO
@@ -7,6 +8,22 @@ import pytest
 import requests
 
 from mysodexo import cli
+
+
+def patch_sys_argv(argv):
+    return mock.patch("sys.argv", argv)
+
+
+def patch_cli_login(return_value=mock.DEFAULT):
+    return mock.patch("mysodexo.cli.login", return_value=return_value)
+
+
+def patch_cli_process_balance():
+    return mock.patch("mysodexo.cli.process_balance")
+
+
+def patch_argparse_print_help():
+    return mock.patch("mysodexo.cli.argparse.ArgumentParser.print_help")
 
 
 def test_prompt_login():
@@ -109,9 +126,7 @@ def test_get_session_or_login_login():
     s_dni = mock.sentinel
     with mock.patch(
         "builtins.open", side_effect=FileNotFoundError
-    ), mock.patch(
-        "mysodexo.cli.login", return_value=(s_session, s_dni)
-    ) as m_login:
+    ), patch_cli_login(return_value=(s_session, s_dni)) as m_login:
         session, dni = cli.get_session_or_login()
     assert m_login.call_args_list == [mock.call()]
     assert session == s_session
@@ -146,3 +161,24 @@ def test_process_balance():
     m_get_cards.call_args_list == [mock.call(m_session, m_dni)]
     m_get_detail_card.call_args_list == [mock.call(m_session, card_number)]
     assert m_stdout.getvalue() == "123456******1234: 12.34\n"
+
+
+@pytest.mark.parametrize(
+    "argv,login_called,process_balance_called,print_help_called",
+    [
+        (["mysodexo/cli.py"], False, False, True),
+        (["mysodexo/cli.py", "--login"], True, False, False),
+        (["mysodexo/cli.py", "--balance"], False, True, False),
+    ],
+)
+def test_main(argv, login_called, process_balance_called, print_help_called):
+    """The help should be printed if no arguments are passed."""
+    with contextlib.ExitStack() as patches:
+        patches.enter_context(patch_sys_argv(argv))
+        m_login = patches.enter_context(patch_cli_login())
+        m_process_balance = patches.enter_context(patch_cli_process_balance())
+        m_print_help = patches.enter_context(patch_argparse_print_help())
+        cli.main()
+    assert m_login.called is login_called
+    assert m_process_balance.called is process_balance_called
+    assert m_print_help.called is print_help_called
