@@ -2,7 +2,7 @@
 
 ## Abstract
 This is documenting my journey to reverse engineering [Sodexo's meal pass card](https://en.wikipedia.org/wiki/Sodexo) API.
-The idea is to understand and document their API to later develop clients for it.
+The idea is to understand and describe their API to later develop clients for it.
 One way to achieve it is by decompiling the [Sodexo Android app](https://play.google.com/store/apps/details?id=com.sodexo.app) APK and look into it.
 The APK in its version 2.4.4 (released the October 3rd 2019) was used.
 
@@ -30,16 +30,16 @@ For some reason we cannot download directly from the `/data/` dir to our host.
 So we need to copy it over the device `/sdcard/` beforehand.
 ```sh
 adb shell cp /data/app/com.sodexo.app-1/base.apk /sdcard/
-adb pull /data/app/com.sodexo.app-1/base.apk .
+adb pull /sdcard/base.apk .
 ```
 
 ## Decompile
 There're various tools even online ones.
-I first gave a try with [Apktool](https://ibotpeaches.github.io/Apktool/), but the result code was hard to follow so I switched to [jadx](https://github.com/skylot/jadx) (version 1.0.0) and was happy with the result.
+I first gave [Apktool](https://ibotpeaches.github.io/Apktool/) a try, but the result code was hard to follow so I switched to [jadx](https://github.com/skylot/jadx) (version 1.0.0) and was happy with the result.
 ```sh
 jadx --output-dir base base.apk
 ```
-One of the first things we do then is to send a couple of `grep` commands URLs on the source code.
+One of the first things we do then is to send a couple of `grep` commands to find URLs in the source code.
 We quickly come across the `resources/res/values/strings.xml` file that contains the following extract:
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -96,10 +96,10 @@ https://sodexows.mo2o.com/
 ```
 
 ## Endpoints
-Now we can access our host, we need to find the endpoints and play with it.
+Now that we can access our host, we need to find the endpoints and play with it.
 Unfortunately we cannot sniff network traffic with a Man-in-the-middle (e.g. via `mitmproxy`) because the app is expecting a specific server certificate. Hence we can't use a self-signed one and decrypt on the fly, see [HTTP Public Key Pinning](https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning).
 
-We go back to the source code and throw a couple of more `grep` to come across `sources/com/sodexo/app/data/api/service/Mo2oApiService.java`.
+We go back to the source code and throw some more `grep` to come across `sources/com/sodexo/app/data/api/service/Mo2oApiService.java`.
 It contains 40+ endpoints, here's a couple:
 ```java
 public interface Mo2oApiService {
@@ -113,7 +113,7 @@ public interface Mo2oApiService {
 ```
 
 ### v3/connect/login
-First dump try:
+First dumb try:
 ```sh
 curl --cert-type P12 \
 --cert ./sodexows.mo2o.com_client-android.p12:android \
@@ -151,7 +151,7 @@ public class C2707a {
 }
 ```
 The important one is `sb.append(Locale.getDefault().getLanguage());`, see <https://developer.android.com/reference/java/util/Locale#getLanguage()>.
-So the language (`ISO 639` format) is added to the base URL, e.g. `en`.
+So the language (`ISO 639` format) is added to the base URL, e.g. `https://sodexows.mo2o.com/en`.
 We can also see they're using the [OkHttp](https://square.github.io/okhttp/) client.
 Back to our endpoint call.
 ```sh
@@ -235,7 +235,7 @@ Now we can try to perform another call putting it all together.
 ```sh
 deviceUid=whatever
 os=0
-username=andre.miras@elementsinteractive.es
+username=foo@bar.com
 pass=password
 curl --cert-type P12 \
 --cert ./sodexows.mo2o.com_client-android.p12:android \
@@ -432,5 +432,3 @@ pip install mysodexo
 mysodexo --balance
 ```
 https://github.com/AndreMiras/mysodexo
-
-Also I'd like to give a special thanks to [Elements](https://www.elements.nl/) an awesome company giving us self development time to dig into things we like.
