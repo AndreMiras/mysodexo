@@ -1,7 +1,7 @@
 # Change Log
 
 
-## [Unreleased]
+## [20191114]
 
   - increase test coverage
   - check for Python minimal version 3.6
