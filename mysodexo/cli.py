@@ -52,22 +52,28 @@ def cache_session_info(
 
 
 def login() -> Tuple[requests.sessions.Session, str]:
-    """Logins and stores session info to cache."""
+    """Logins and returns session info."""
     email, password = prompt_login()
     session, account_info = api.login(email, password)
     dni = account_info["dni"]
+    return (session, dni)
+
+
+def process_login() -> Tuple[requests.sessions.Session, str]:
+    """Logins and stores session info to cache."""
+    session, dni = login()
     cache_session_info(session.cookies, dni)
     return (session, dni)
 
 
 def get_session_or_login() -> Tuple[requests.sessions.Session, str]:
-    """Retrieves session from cache or prompts login."""
+    """Retrieves session from cache or prompts login then stores session."""
     try:
         cookies, dni = get_cached_session_info()
         session = requests.session()
         session.cookies.update(cookies)
     except FileNotFoundError:
-        session, dni = login()
+        session, dni = process_login()
     return session, dni
 
 
@@ -104,7 +110,7 @@ def main():
     )
     args = parser.parse_args()
     if args.login:
-        login()
+        process_login()
     elif args.balance:
         process_balance()
     else:

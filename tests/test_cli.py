@@ -14,8 +14,8 @@ def patch_sys_argv(argv):
     return mock.patch("sys.argv", argv)
 
 
-def patch_cli_login(return_value=mock.DEFAULT):
-    return mock.patch("mysodexo.cli.login", return_value=return_value)
+def patch_cli_process_login(return_value=mock.DEFAULT):
+    return mock.patch("mysodexo.cli.process_login", return_value=return_value)
 
 
 def patch_cli_process_balance():
@@ -88,20 +88,38 @@ def test_cache_session_info():
 def test_login():
     m_email = mock.Mock()
     m_password = mock.Mock()
-    s_session = mock.sentinel
+    m_session = mock.Mock()
+    account_info = {"dni": "dni"}
+    with mock.patch(
+        "mysodexo.cli.prompt_login", return_value=(m_email, m_password)
+    ) as m_prompt_login, mock.patch(
+        "mysodexo.api.login", return_value=(m_session, account_info)
+    ) as m_login:
+        session, dni = cli.login()
+    assert m_prompt_login.call_args_list == [mock.call()]
+    assert m_login.call_args_list == [mock.call(m_email, m_password)]
+    assert session == m_session
+    assert dni == account_info["dni"]
+
+
+def test_process_login():
+    m_email = mock.Mock()
+    m_password = mock.Mock()
+    m_session = mock.Mock(cookies={})
     account_info = {"dni": "dni"}
     with tempfile.NamedTemporaryFile() as cache_file:
         with mock.patch(
             "mysodexo.cli.prompt_login", return_value=(m_email, m_password)
         ) as m_prompt_login, mock.patch(
-            "mysodexo.api.login", return_value=(s_session, account_info)
+            "mysodexo.api.login", return_value=(m_session, account_info)
         ) as m_login, mock.patch(
             "mysodexo.cli.get_session_cache_path", return_value=cache_file.name
-        ):
-            session, dni = cli.login()
+        ) as m_get_session_cache_path:
+            session, dni = cli.process_login()
     assert m_prompt_login.call_args_list == [mock.call()]
     assert m_login.call_args_list == [mock.call(m_email, m_password)]
-    assert session == s_session
+    assert m_get_session_cache_path.call_args_list == [mock.call()]
+    assert session == m_session
     assert dni == account_info["dni"]
 
 
@@ -122,15 +140,15 @@ def test_get_session_or_login_session():
 
 def test_get_session_or_login_login():
     """The `login()` should be used when session cookies are not available."""
-    s_session = mock.sentinel
-    s_dni = mock.sentinel
+    m_session = mock.Mock(cookies={})
+    m_dni = "dni"
     with mock.patch(
-        "builtins.open", side_effect=FileNotFoundError
-    ), patch_cli_login(return_value=(s_session, s_dni)) as m_login:
+        "mysodexo.cli.get_cached_session_info", side_effect=FileNotFoundError
+    ), patch_cli_process_login(return_value=(m_session, m_dni)) as m_login:
         session, dni = cli.get_session_or_login()
     assert m_login.call_args_list == [mock.call()]
-    assert session == s_session
-    assert dni == s_dni
+    assert session == m_session
+    assert dni == m_dni
 
 
 def test_print_balance():
@@ -164,21 +182,23 @@ def test_process_balance():
 
 
 @pytest.mark.parametrize(
-    "argv,login_called,process_balance_called,print_help_called",
+    "argv,process_login_called,process_balance_called,print_help_called",
     [
         (["mysodexo/cli.py"], False, False, True),
         (["mysodexo/cli.py", "--login"], True, False, False),
         (["mysodexo/cli.py", "--balance"], False, True, False),
     ],
 )
-def test_main(argv, login_called, process_balance_called, print_help_called):
+def test_main(
+    argv, process_login_called, process_balance_called, print_help_called
+):
     """The help should be printed if no arguments are passed."""
     with contextlib.ExitStack() as patches:
         patches.enter_context(patch_sys_argv(argv))
-        m_login = patches.enter_context(patch_cli_login())
+        m_process_login = patches.enter_context(patch_cli_process_login())
         m_process_balance = patches.enter_context(patch_cli_process_balance())
         m_print_help = patches.enter_context(patch_argparse_print_help())
         cli.main()
-    assert m_login.called is login_called
+    assert m_process_login.called is process_login_called
     assert m_process_balance.called is process_balance_called
     assert m_print_help.called is print_help_called
