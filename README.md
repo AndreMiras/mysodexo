@@ -1,6 +1,6 @@
 # Mysodexo Python client
 
-[![Build Status](https://travis-ci.com/AndreMiras/mysodexo.svg?branch=main)](https://travis-ci.com/AndreMiras/mysodexo)
+[![Tests](https://github.com/AndreMiras/mysodexo/workflows/Tests/badge.svg)](https://github.com/AndreMiras/mysodexo/actions/workflows/tests.yml)
 [![Coverage Status](https://coveralls.io/repos/github/AndreMiras/mysodexo/badge.svg?branch=main)](https://coveralls.io/github/AndreMiras/mysodexo?branch=main)
 [![PyPI version](https://badge.fury.io/py/mysodexo.svg)](https://badge.fury.io/py/mysodexo)
 

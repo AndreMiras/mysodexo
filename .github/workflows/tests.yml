@@ -1,0 +1,26 @@
+name: Tests
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.6", "3.7"]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install tox
+      - run: tox -e py
+      - name: Linter
+        if: matrix.python == '3.7'
+        run: make lint
+      - name: Coveralls
+        if: matrix.python == '3.7'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tox -e coveralls
