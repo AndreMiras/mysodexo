@@ -6,17 +6,22 @@
 
 A Python client for the Mysodexo [reverse engineered API](https://github.com/AndreMiras/mysodexo/blob/main/docs/ReverseEngineering.md).
 
-
 ## Install & Usage
+
 Install it with pip.
+
 ```sh
 pip install mysodexo
 ```
+
 Then use the command line client.
+
 ```sh
 mysodexo --balance
 ```
+
 Or the library.
+
 ```python
 from mysodexo import api
 session, account_info = api.login("foo@bar.com", "password")
