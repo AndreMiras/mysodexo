@@ -1,78 +1,60 @@
 VIRTUAL_ENV ?= venv
+REQUIREMENTS:=requirements.txt
 PIP=$(VIRTUAL_ENV)/bin/pip
-TOX=`which tox`
 PYTHON=$(VIRTUAL_ENV)/bin/python
 ISORT=$(VIRTUAL_ENV)/bin/isort
 FLAKE8=$(VIRTUAL_ENV)/bin/flake8
 BLACK=$(VIRTUAL_ENV)/bin/black
 PYTEST=$(VIRTUAL_ENV)/bin/pytest
-MYPY=$(VIRTUAL_ENV)/bin/mypy
-# only report coverage for one Python version in tox testing
-COVERALLS=.tox/py$(PYTHON_MAJOR_MINOR)/bin/coveralls
-TWINE=`which twine`
-SOURCES=mysodexo/ tests/ setup.py setup_meta.py
-# using full path so it can be used outside the root dir
-SPHINXBUILD=$(shell realpath venv/bin/sphinx-build)
-DOCS_DIR=docs
+TOX=$(VIRTUAL_ENV)/bin/tox
+TWINE=$(VIRTUAL_ENV)/bin/twine
 PYTHON_MAJOR_VERSION=3
 PYTHON_MINOR_VERSION=7
-SYSTEM_DEPENDENCIES= \
-	libpython3.6-dev \
-	libpython$(PYTHON_VERSION)-dev \
-	python3.6 \
-	python3.6-dev \
-	python$(PYTHON_VERSION) \
-	python$(PYTHON_VERSION)-dev \
-	tox \
-	virtualenv
 PYTHON_VERSION=$(PYTHON_MAJOR_VERSION).$(PYTHON_MINOR_VERSION)
 PYTHON_MAJOR_MINOR=$(PYTHON_MAJOR_VERSION)$(PYTHON_MINOR_VERSION)
 PYTHON_WITH_VERSION=python$(PYTHON_VERSION)
+SOURCES=mysodexo/ tests/ setup.py
+SPHINXBUILD=$(shell realpath venv/bin/sphinx-build)
+DOCS_DIR=docs
 
-
-all: virtualenv
-
-system_dependencies:
-	sudo apt install --yes --no-install-recommends $(SYSTEM_DEPENDENCIES)
 
 $(VIRTUAL_ENV):
-	virtualenv -p $(PYTHON_WITH_VERSION) $(VIRTUAL_ENV)
-	$(PIP) install -r requirements.txt
+	$(PYTHON_WITH_VERSION) -m venv $(VIRTUAL_ENV)
+	$(PIP) install -r $(REQUIREMENTS)
 
 virtualenv: $(VIRTUAL_ENV)
 
-run: virtualenv
-	PYTHONPATH=. $(PYTHON) mysodexo/api.py
-
-test:
+test: $(VIRTUAL_ENV)
 	$(TOX)
-	@if [ -n "$$CI" ] && [ -f $(COVERALLS) ]; then $(COVERALLS); fi \
 
-doctest: virtualenv
-	$(PYTHON) -m doctest mysodexo/*.py
+pytest: $(VIRTUAL_ENV)
+	$(PYTEST) --cov mysodexo/ --cov-report term --cov-report html tests/
 
-pytest: virtualenv
-	$(PYTEST) --cov mysodexo/ --cov-report html tests/
+lint/isort: $(VIRTUAL_ENV)
+	$(ISORT) --check-only --diff $(SOURCES)
 
-lint/isort-check: virtualenv
-	$(ISORT) --check-only --recursive --diff $(SOURCES)
-
-lint/isort-fix: virtualenv
-	$(ISORT) --recursive $(SOURCES)
-
-lint/black-fix: virtualenv
-	$(BLACK) --verbose $(SOURCES)
-
-lint/flake8: virtualenv
+lint/flake8: $(VIRTUAL_ENV)
 	$(FLAKE8) $(SOURCES)
 
-lint/black-check: virtualenv
+lint/black: $(VIRTUAL_ENV)
 	$(BLACK) --check $(SOURCES)
 
-lint/mypy: virtualenv
-	$(MYPY) $(SOURCES)
+format/isort: $(VIRTUAL_ENV)
+	$(ISORT) $(SOURCES)
 
-lint: lint/isort-check lint/flake8 lint/black-check lint/mypy
+format/black: $(VIRTUAL_ENV)
+	$(BLACK) --verbose $(SOURCES)
+
+lint: lint/isort lint/flake8 lint/black
+
+format: format/isort format/black
+
+clean:
+	find . -type d -name "__pycache__" -exec rm -r {} +
+	find . -type d -name "*.egg-info" -exec rm -r {} +
+
+clean/all: clean
+	rm -rf $(VIRTUAL_ENV)
 
 docs/clean:
 	rm -rf $(DOCS_DIR)/build/
@@ -87,15 +69,7 @@ release/clean:
 
 release/build: release/clean virtualenv
 	$(PYTHON) setup.py sdist bdist_wheel
-	$(PYTHON) setup_meta.py sdist bdist_wheel
 	$(TWINE) check dist/*
 
 release/upload:
 	$(TWINE) upload dist/*
-
-clean: release/clean docs/clean
-	find . -type d -name "__pycache__" -exec rm -r {} +
-	find . -type d -name "*.egg-info" -exec rm -r {} +
-
-clean/all: clean
-	rm -rf $(VIRTUAL_ENV) .tox/

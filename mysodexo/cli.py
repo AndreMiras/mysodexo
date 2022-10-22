@@ -101,7 +101,9 @@ def main():
         description="MySodexo Command Line Interface"
     )
     parser.add_argument(
-        "--login", action="store_true", help="Logins and store session.",
+        "--login",
+        action="store_true",
+        help="Logins and store session.",
     )
     parser.add_argument(
         "--balance",
