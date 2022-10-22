@@ -1,8 +1,1 @@
-appdirs
-black
-coveralls
-flake8
-isort
-mypy
-pytest
-pytest-cov
+-e .[dev]

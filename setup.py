@@ -29,6 +29,20 @@ setup_params = {
     "url": "https://github.com/AndreMiras/mysodexo",
     "packages": ("mysodexo",),
     "install_requires": ("requests", "appdirs"),
+    "extras_require": {
+        "dev": [
+            "black",
+            "coveralls",
+            "flake8",
+            "isort",
+            "mypy",
+            "pytest",
+            "pytest-cov",
+            "tox",
+            "twine",
+            "wheel",
+        ]
+    },
     "include_package_data": True,
     "entry_points": {"console_scripts": ("mysodexo=mysodexo.cli:main",)},
 }
