@@ -17,7 +17,8 @@ git checkout -b release/$VERSION
 Now update the [setup.py](../setup.py) `version` to match the new release version.
 
 ```sh
-sed --regexp-extended 's/"version": "(.+)"/"version": "'$VERSION'"/' --in-place setup.py
+SANITIZED_VERSION=$(echo $VERSION | sed 's/\.//g')
+sed --regexp-extended 's/"version": "(.+)"/"version": "'$SANITIZED_VERSION'"/' --in-place setup.py
 ```
 
 Then commit/push and create a pull request targeting the `main` branch.

@@ -21,7 +21,7 @@ def read(fname):
 # exposing the params so it can be imported
 setup_params = {
     "name": "mysodexo",
-    "version": "20191114",
+    "version": "20221022",
     "description": "Mysodexo Python client",
     "long_description": read("README.md"),
     "long_description_content_type": "text/markdown",
