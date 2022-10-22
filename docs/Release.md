@@ -2,33 +2,45 @@
 
 This is documenting the release process.
 
-## Git flow & CHANGELOG.md
-
-Make sure the CHANGELOG.md is up to date and follows the http://keepachangelog.com guidelines.
-Start the release with git flow:
+We're using [calendar versioning](https://calver.org/) where `YYYY.MM.DD` should be set accordingly.
 
 ```sh
-git flow release start YYYYMMDD
+VERSION=YYYY.MM.DD
 ```
 
-Now update the [CHANGELOG.md](/CHANGELOG.md) `[Unreleased]` section to match the new release version.
-Also update the `version` string in the [setup.py](/setup.py) file. Then commit and finish release.
+## Start the release
 
 ```sh
-git commit -a -m "YYYYMMDD"
-git flow release finish
+git checkout -b release/$VERSION
 ```
 
-Push everything, make sure tags are also pushed:
+Now update the [setup.py](../setup.py) `version` to match the new release version.
 
 ```sh
-git push
-git push origin master:master
+sed --regexp-extended 's/"version": "(.+)"/"version": "'$VERSION'"/' --in-place setup.py
+```
+
+Then commit/push and create a pull request targeting the `main` branch.
+
+```sh
+git commit -a -m ":bookmark: $VERSION"
+git push origin release/$VERSION
+```
+
+Once the pull requests is approved/merged, tag the `main` branch with the version.
+In the case of a sole owner, no pull request is required, but at least verify the CI builds green.
+
+```sh
+git checkout main
+git pull
+git tag -a $VERSION -m ":bookmark: $VERSION"
 git push --tags
 ```
 
 ## Publish to PyPI
 
+This process is handled automatically by [GitHub Actions](https://github.com/AndreMiras/mysodexo/actions/workflows/pypi-release.yml).
+If needed below are the instructions to perform it manually.
 Build it:
 
 ```sh
@@ -48,6 +60,11 @@ make release/upload
 ```
 
 This will also publish the alias meta package `setup_meta.py`.
+
+## Release notes
+
+You may want to add some GitHub release notes, by attaching a release to
+[the newly pushed tag](https://github.com/AndreMiras/mysodexo/tags).
 
 ## Check Read the Docs
 
